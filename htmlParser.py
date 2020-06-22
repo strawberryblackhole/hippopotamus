@@ -137,8 +137,8 @@ class MyHTMLParser(HTMLParser):
 def getFormatedArticle(html):
     parser = MyHTMLParser()
     soup = BeautifulSoup(html, features ="html.parser")
-    text = parser.feed(str(soup).replace("\n", "").replace("\t", ""))
-    #text = parser.feed(html.replace("\n", "").replace("\t", "")) # it doesnt work when not using beautifulsoup...
+    text = parser.feed(str(soup).replace("\n", "").replace("\t", "")) #bfs processing time is roughly 1/4 of this functions time, and is probably not needed. But it seems to make the html much nicer
+    #text = parser.feed(html.replace("\n", "").replace("\t", "")) # some things break when not using bfs
     parser.close()
 
     return text

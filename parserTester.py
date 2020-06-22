@@ -25,8 +25,7 @@ for article in range(articleCount):
 
     article = [x for x in articles if x[2] == article]
 
-    print(time.perf_counter() - start)
-    print("articleSearch")
+    print("article search", time.perf_counter() - start)
 
     if len(article) > 1:
         raise Exception()
@@ -40,13 +39,11 @@ for article in range(articleCount):
 
         start = time.perf_counter()
         a = zimfile._get_article_by_index(articleId).data.decode("utf-8")
-        print(time.perf_counter() - start)
-        print("article read")
+        print("article read", time.perf_counter() - start)
 
         start = time.perf_counter()
         formatedArticle = getFormatedArticle(a)
-        print(time.perf_counter() - start)
-        print("article parse")
+        print("article parse", time.perf_counter() - start)
         print(formatedArticle)
         if count > 4:
             break
