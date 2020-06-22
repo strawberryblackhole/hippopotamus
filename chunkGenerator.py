@@ -4,6 +4,8 @@ from amulet.api.block_entity import BlockEntity
 from htmlParser import getFormatedArticle
 from functools import partial
 import multiprocessing
+from multiprocessing.pool import Pool
+from multiprocessing.pool import ThreadPool
 from ZIMply.zimply import ZIMFile
 import time
 
@@ -93,7 +95,10 @@ def fillbarrels(chunk, barrelPositionList, barrelBlock, articles, booksPerBarrel
 
         start = time.perf_counter()
 
-        pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
+        if booksPerBarrel > 15: #somewhere there has to be the breakeven between threads and processes
+            pool = Pool(processes=multiprocessing.cpu_count())
+        else:
+            pool = ThreadPool(processes=multiprocessing.cpu_count())
         outputs = pool.map(partial(tryGetArticle, zimFilePath = zimfilePath, articles = articles), range(currentArticle, currentArticle + booksPerBarrel))
         pool.close()
         currentArticle += booksPerBarrel
