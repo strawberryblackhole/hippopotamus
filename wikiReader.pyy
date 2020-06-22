@@ -1,0 +1,27 @@
+from zimpy import ZIMFile 
+import os
+import math
+from fill import generateBarrelList
+
+def idToCoords(id, maxID):
+    maxChunk = maxID // articlesPerChunk
+    chunksPerSide = ceiling(math.sqrt(maxChunk))
+    chunk = id // articlesPerChunk# 2 high 6 deep 4 of that and that 2x
+    indexInChunk = id % articlesPerChunk
+    chunkX = chunk // chunksPerSide
+    chunkZ = chunk % chunksPerSide
+
+    inChunkPos = barrelPositions[indexInChunk]
+
+
+barrelPositions = generateBarrelList()
+articlesPerChunk = 2*6*8*2
+
+
+zimfile = ZIMFile(os.path.dirname(os.path.realpath(__file__)) + "\\wikipedia_de_basketball_nopic_2020-04.zim","utf-8")
+articleCount = list(zimfile.__iter__())[-1][2]
+
+for url in zimfile.__iter__():
+    #zimfile._get_article_by_index()
+    print(url[2])
+    print(idToCoords(url[2], articleCount))
