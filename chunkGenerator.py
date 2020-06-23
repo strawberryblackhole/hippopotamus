@@ -84,9 +84,8 @@ def fillSigns(chunk, world, dimension, sign_north, sign_south):
             chunk.block_entities.insert(generateSignEntity(x + chunk.cx * 16, 6, z + chunk.cz * 16, -1))
 
 
-def fillbarrels(chunk, barrelPositionList, barrelBlock, articles, booksPerBarrel, zimfilePath):
+def fillbarrels(chunk, barrelPositionList, barrelBlock, currentArticle, booksPerBarrel, zimfilePath):
     """Generates all barrels in the chunk and fills them with books/articles"""
-    currentArticle = 0
     
     for barrelPos in barrelPositionList:
         books = []
@@ -99,11 +98,11 @@ def fillbarrels(chunk, barrelPositionList, barrelBlock, articles, booksPerBarrel
             pool = Pool(processes=multiprocessing.cpu_count())
         else:
             pool = ThreadPool(processes=multiprocessing.cpu_count())
-        outputs = pool.map(partial(tryGetArticle, zimFilePath = zimfilePath, articles = articles), range(currentArticle, currentArticle + booksPerBarrel))
+        outputs = pool.map(partial(tryGetArticle, zimFilePath = zimfilePath), range(currentArticle, currentArticle + booksPerBarrel))
         pool.close()
         currentArticle += booksPerBarrel
         for output in outputs:
-            if output[0] == False:
+            if output[0] == None:
                 continue
             titles.append(output[1])
             books.append(output[0])
@@ -150,36 +149,27 @@ def fillbarrels(chunk, barrelPositionList, barrelBlock, articles, booksPerBarrel
         chunk.block_entities.insert(barrelEntity)
 
 
-def tryGetArticle(id, zimFilePath, articles):
+def tryGetArticle(id, zimFilePath):
     """Tries to find the article with the given id, returns [False, False] if no article was found, else article and its title are returned"""
 
     start = time.perf_counter()
-
-    article = [x for x in articles if x[2] == id]
-
     zimFile = ZIMFile(zimFilePath,"utf-8")
 
     stop = time.perf_counter()
-    print("overhead ", stop - start)
+    #print("some overhead ", stop - start)
+
     start = time.perf_counter()
-
-    if len(article) > 1:
-        raise Exception()
-    foundArticle = len(article) == 1
-    
-    if foundArticle:
-        article = article[0]
-        articleTitle = article[1]
-        articleId = article[2]   
-        articleContent = getFormatedArticle(zimFile._get_article_by_index(articleId).data.decode("utf-8"))
-        
+    article = zimFile._get_article_by_index(id)
+    if article != None and "image" not in article.mimetype:
+        articleContent = getFormatedArticle(article.data.decode("utf-8"))
         stop = time.perf_counter()  
-        print("parsing ", stop - start)
-        return articleContent, articleTitle
-    return False, False
+        #print("parsing ", stop - start)
+
+        return articleContent, article.title
+    return None, None
 
 
-def fillChunk(chunk, barrelPositionList, world, dimension, articles, booksPerBarrel, zimfilePath):
+def fillChunk(chunk, barrelPositionList, world, dimension, currentArticle, booksPerBarrel, zimfilePath):
     """Fills the chunk with all blocks and content"""
     barrel, wool, glowstone, sign_north, sign_south, air, stone, lantern = createBlocks(world)
 
@@ -206,7 +196,7 @@ def fillChunk(chunk, barrelPositionList, world, dimension, articles, booksPerBar
     chunk.blocks[15,4,0] = glowstone
     chunk.blocks[15,4,15] = glowstone
 
-    fillbarrels(chunk, barrelPositionList, barrel, articles, booksPerBarrel, zimfilePath)
+    fillbarrels(chunk, barrelPositionList, barrel, currentArticle, booksPerBarrel, zimfilePath)
 
     chunk.changed = True
 

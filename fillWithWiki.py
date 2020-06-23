@@ -10,6 +10,7 @@ from amulet.world_interface import load_world
 def generateChunkList(totalArticleCount, chunkBookCapacity, target_pos):
     #generate a square, that could fit (more than) all articles
     sideLength = math.ceil(math.sqrt(totalArticleCount/chunkBookCapacity))
+    print("/forceload %d %d %d %d"%(target_pos[0], target_pos[1], target_pos[0] + (sideLength+2)*16, target_pos[1] + (sideLength+2)*16))#give it 2 more chunks just to be sure
     chunkList = []
     for x in range(sideLength):
         for z in range(sideLength):
@@ -43,10 +44,14 @@ def generateWallList(chunkList):
 
 
 def fill(world, booksPerBarrel, position, dimension = "overworld"):
-    filePath = path.dirname(path.realpath(__file__)) + "\\wikipedia_de_basketball_nopic_2020-04.zim"
+    #filePath = path.dirname(path.realpath(__file__)) + "\\wikipedia_de_basketball_nopic_2020-04.zim"
+    filePath = path.dirname(path.realpath(__file__)) + "\\wikipedia_de_all_nopic_2020-04.zim"
     zimfile = ZIMFile(filePath,"utf-8")
-    articles = list(zimfile)
-    totalArticleCount = articles[-1][2]
+
+    article = None
+    for article in zimfile:
+        pass
+    totalArticleCount = article[2]
 
     barrelPositionList = generateBarrelPositionList()
     barrelsPerChunk = len(barrelPositionList)
@@ -57,9 +62,11 @@ def fill(world, booksPerBarrel, position, dimension = "overworld"):
 
     totalChunkCount = len(chunkList) + len(wallChunkList)
     completedChunks = 0
+    currentArticle = 0
     for chunkCoords in chunkList:
         chunk = world.get_chunk(chunkCoords[0], chunkCoords[1], dimension)
-        fillChunk(chunk, barrelPositionList, world, dimension, articles, booksPerBarrel, filePath)
+        fillChunk(chunk, barrelPositionList, world, dimension, currentArticle, booksPerBarrel, filePath)
+        currentArticle += booksPerBarrel * barrelsPerChunk
 
         completedChunks += 1
         break
@@ -75,7 +82,7 @@ def fill(world, booksPerBarrel, position, dimension = "overworld"):
 
 if __name__ == "__main__":
     world = load_world(path.expandvars('%APPDATA%\\.minecraft\\saves\\New World (3)\\'))
-    for x in fill(world, 2, [0, 0]):
+    for x in fill(world, 27, [0, 0]):
         print(x)
 
     world.save()
