@@ -52,6 +52,7 @@ def fill(world, booksPerBarrel, position, dimension = "overworld"):
     for article in zimfile:
         pass
     totalArticleCount = article[2]
+    print("articles: ", totalArticleCount)
 
     barrelPositionList = generateBarrelPositionList()
     barrelsPerChunk = len(barrelPositionList)
@@ -64,11 +65,15 @@ def fill(world, booksPerBarrel, position, dimension = "overworld"):
     completedChunks = 0
     currentArticle = 0
     for chunkCoords in chunkList:
+        start = time.perf_counter()
         chunk = world.get_chunk(chunkCoords[0], chunkCoords[1], dimension)
         fillChunk(chunk, barrelPositionList, world, dimension, currentArticle, booksPerBarrel, filePath)
         currentArticle += booksPerBarrel * barrelsPerChunk
 
+        world.save()
+
         completedChunks += 1
+        print("loop time: ", (time.perf_counter() - start)/60)
         break
         yield 100 * completedChunks / totalChunkCount
 
