@@ -84,7 +84,7 @@ def fillSigns(chunk, world, dimension, sign_north, sign_south):
             chunk.block_entities.insert(generateSignEntity(x + chunk.cx * 16, 6, z + chunk.cz * 16, -1))
 
 
-def fillbarrels(chunk, barrelPositionList, barrelBlock, currentArticle, booksPerBarrel, zimfilePath):
+def fillbarrels(chunk, barrelPositionList, barrelBlock, currentArticle, booksPerBarrel, zimFilePath):
     """Generates all barrels in the chunk and fills them with books/articles"""
     
     for barrelPos in barrelPositionList:
@@ -94,12 +94,15 @@ def fillbarrels(chunk, barrelPositionList, barrelBlock, currentArticle, booksPer
 
         start = time.perf_counter()
 
-        if booksPerBarrel > 999: #for big wikis processes do not seem to have an advantage over threads. with a full barrel a thread needs 100 ms per book, process 150 ms
-            pool = Pool(processes=multiprocessing.cpu_count())
-        else:
-            pool = ThreadPool(processes=multiprocessing.cpu_count())
-        outputs = pool.map(partial(tryGetArticle, zimFilePath = zimfilePath), range(currentArticle, currentArticle + booksPerBarrel))
+        #for big wikis processes do not seem to have an advantage over threads. with a full barrel a thread needs 100 ms per book, process 150 ms
+        #pool = Pool(processes=multiprocessing.cpu_count())
+        pool = ThreadPool(processes=multiprocessing.cpu_count())
+        outputs = pool.map(partial(tryGetArticle, zimFilePath = zimFilePath), range(currentArticle, currentArticle + booksPerBarrel))
         pool.close()
+        #outputs = []
+        #for id in range(currentArticle, currentArticle + booksPerBarrel):
+        #    outputs.append(tryGetArticle(id, zimFilePath))
+
         currentArticle += booksPerBarrel
         for output in outputs:
             if output[0] == None:

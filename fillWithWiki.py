@@ -74,6 +74,7 @@ def fill(world, booksPerBarrel, position, dimension = "overworld"):
 
         completedChunks += 1
         print("loop time: ", (time.perf_counter() - start)/60)
+        print("completed chunk: ", completedChunks)
         break
         yield 100 * completedChunks / totalChunkCount
 
