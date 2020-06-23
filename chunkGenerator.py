@@ -94,7 +94,7 @@ def fillbarrels(chunk, barrelPositionList, barrelBlock, currentArticle, booksPer
 
         start = time.perf_counter()
 
-        if booksPerBarrel > 15: #somewhere there has to be the breakeven between threads and processes
+        if booksPerBarrel > 999: #for big wikis processes do not seem to have an advantage over threads. with a full barrel a thread needs 100 ms per book, process 150 ms
             pool = Pool(processes=multiprocessing.cpu_count())
         else:
             pool = ThreadPool(processes=multiprocessing.cpu_count())
