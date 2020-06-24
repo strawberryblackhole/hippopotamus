@@ -43,9 +43,9 @@ def generateWallList(chunkList):
     return wallChunkWithSlice
 
 
-def fill(world, booksPerBarrel, position, dimension = "overworld"):
-    #filePath = path.dirname(path.realpath(__file__)) + "\\wikipedia_de_basketball_nopic_2020-04.zim"
-    filePath = path.dirname(path.realpath(__file__)) + "\\wikipedia_de_all_nopic_2020-04.zim"
+def fill(world, booksPerBarrel, position, dimension = "overworld", skip = 0):
+    filePath = path.dirname(path.realpath(__file__)) + "\\wikipedia_de_basketball_nopic_2020-04.zim"
+    #filePath = path.dirname(path.realpath(__file__)) + "\\wikipedia_de_all_nopic_2020-04.zim"
     zimfile = ZIMFile(filePath,"utf-8")
 
     article = None
@@ -65,6 +65,9 @@ def fill(world, booksPerBarrel, position, dimension = "overworld"):
     completedChunks = 0
     currentArticle = 0
     for chunkCoords in chunkList:
+        if skip > 0:
+            skip -= 1
+            continue
         start = time.perf_counter()
         chunk = world.get_chunk(chunkCoords[0], chunkCoords[1], dimension)
         fillChunk(chunk, barrelPositionList, world, dimension, currentArticle, booksPerBarrel, filePath)
@@ -75,7 +78,6 @@ def fill(world, booksPerBarrel, position, dimension = "overworld"):
         completedChunks += 1
         print("loop time: ", (time.perf_counter() - start)/60)
         print("completed chunk: ", completedChunks)
-        break
         yield 100 * completedChunks / totalChunkCount
 
     for wallChunkCoords, orientation in wallChunkList:
@@ -87,8 +89,8 @@ def fill(world, booksPerBarrel, position, dimension = "overworld"):
 
 
 if __name__ == "__main__":
-    world = load_world(path.expandvars('%APPDATA%\\.minecraft\\saves\\New World (3)\\'))
-    for x in fill(world, 27, [0, 0]):
+    world = load_world(path.expandvars('%APPDATA%\\.minecraft\\saves\\New World (4)\\'))
+    for x in fill(world, 9, [0, 0]):
         print(x)
 
     world.save()
