@@ -94,9 +94,10 @@ def fillbarrels(chunk, barrelPositionList, barrelBlock, currentArticle, booksPer
 
         start = time.perf_counter()
 
-        #for big wikis processes do not seem to have an advantage over threads. with a full barrel a thread needs 100 ms per book, process 150 ms
-        #pool = Pool(processes=multiprocessing.cpu_count())
-        pool = ThreadPool(processes=multiprocessing.cpu_count())
+        if booksPerBarrel > 10:
+            pool = Pool(processes=4) #on my laptop ~4 processes was faster than any amount of threads (4 = logic core count)
+        else:
+            pool = ThreadPool(processes=3)#the article reading is mostly cpu limited, so going high on process count doesnt help
         outputs = pool.map(partial(tryGetArticle, zimFilePath = zimFilePath), range(currentArticle, currentArticle + booksPerBarrel))
         pool.close()
         #outputs = []
@@ -111,7 +112,7 @@ def fillbarrels(chunk, barrelPositionList, barrelBlock, currentArticle, booksPer
             books.append(output[0])
 
         stop = time.perf_counter()
-        #print("generating a book", (stop-start)/booksPerBarrel)
+        print("generating a book", (stop-start)/booksPerBarrel)
 
 
 
