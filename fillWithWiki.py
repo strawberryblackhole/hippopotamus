@@ -43,30 +43,42 @@ def generateWallList(chunkList):
     return wallChunkWithSlice
 
 
-def fill(world, booksPerBarrel, position, dimension = "overworld", skip = 0):
-    filePath = path.dirname(path.realpath(__file__)) + "\\wikipedia_de_basketball_nopic_2020-04.zim"
-    #filePath = path.dirname(path.realpath(__file__)) + "\\wikipedia_de_all_nopic_2020-04.zim"
-    zimfile = ZIMFile(filePath,"utf-8")
-
+def getLastArticleId(zimfile):
     article = None
     for article in zimfile:
         pass
-    totalArticleCount = article[2]
-    print("articles: ", totalArticleCount)
+    return article[2]
+
+def fill(world, booksPerBarrel, position,
+    dimension = "overworld",
+    skipChunk = 0, 
+    skipArticles = 0,
+    filePath = path.dirname(path.realpath(__file__)) + "\\wikipedia_de_all_nopic_2020-04.zim",
+    onlyPrintForceLoad = False
+    ):
+
+    #filePath = path.dirname(path.realpath(__file__)) + "\\wikipedia_de_basketball_nopic_2020-04.zim"
+    
+    zimfile = ZIMFile(filePath,"utf-8")
+
+    totalArticleCount = getLastArticleId(zimfile)
 
     barrelPositionList = generateBarrelPositionList()
     barrelsPerChunk = len(barrelPositionList)
     chunkBookCapacity = barrelsPerChunk * booksPerBarrel
    
     chunkList = generateChunkList(totalArticleCount, chunkBookCapacity, position)
+    if onlyPrintForceLoad:
+        return
+
     wallChunkList = generateWallList(chunkList)
 
     totalChunkCount = len(chunkList) + len(wallChunkList)
     completedChunks = 0
-    currentArticle = 0
+    currentArticle = skipArticles
     for chunkCoords in chunkList:
-        if skip > 0:
-            skip -= 1
+        if skipChunk > 0:
+            skipChunk -= 1
             continue
         start = time.perf_counter()
         chunk = world.get_chunk(chunkCoords[0], chunkCoords[1], dimension)

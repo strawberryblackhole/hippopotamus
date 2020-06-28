@@ -113,7 +113,7 @@ def fillbarrels(chunk, barrelPositionList, barrelBlock, currentArticle, booksPer
             books.append(output[0])
 
         stop = time.perf_counter()
-        print("generating a book", (stop-start)/booksPerBarrel)
+        #print("generating a book", (stop-start)/booksPerBarrel)
 
 
 
