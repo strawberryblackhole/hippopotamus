@@ -8,6 +8,7 @@ from multiprocessing.pool import Pool
 from multiprocessing.pool import ThreadPool
 from ZIMply.zimply import ZIMFile
 import time
+import re
 
 def getBlock(world, block):
     """turns a block object into a usable block object, no idea what this actually does"""
@@ -164,8 +165,12 @@ def tryGetArticle(id, zimFilePath):
 
     start = time.perf_counter()
     article = zimFile._get_article_by_index(id)
-    if article != None and "image" not in article.mimetype:
+    if article != None and article.mimetype == "text/html":
         articleContent = getFormatedArticle(article.data.decode("utf-8"))
+
+        re_pattern = re.compile(u'[^\u0000-\uD7FF\uE000-\uFFFF]', re.UNICODE)
+        articleContent = [re_pattern.sub(u'\uFFFD', page) for page in articleContent] # seems like mc cant handle 💲. (article about the $ sign), this lead me to the assumption, that mc cant handle any surrogate unicode pair. https://stackoverflow.com/questions/3220031/how-to-filter-or-replace-unicode-characters-that-would-take-more-than-3-bytes/3220210#3220210
+
         stop = time.perf_counter()  
         #print("parsing ", stop - start)
 
