@@ -4,6 +4,7 @@ from ZIMply.zimply import ZIMFile
 from os import path
 import math
 import time
+import argparse
 
 from amulet.world_interface import load_world
 
@@ -49,16 +50,13 @@ def getLastArticleId(zimfile):
         pass
     return article[2]
 
-def fill(world, booksPerBarrel, position,
-    dimension = "overworld",
-    skipChunk = 0, 
-    skipArticles = 0,
-    filePath = path.dirname(path.realpath(__file__)) + "\\wikipedia_de_all_nopic_2020-04.zim",
-    onlyPrintForceLoad = False
-    ):
-
-    #filePath = path.dirname(path.realpath(__file__)) + "\\wikipedia_de_basketball_nopic_2020-04.zim"
-    
+def fill(       booksPerBarrel, 
+                position, 
+                world = False, 
+                dimension = "overworld", 
+                skipChunk = 0, 
+                 skipArticles = 0, 
+                 filePath = path.dirname(path.realpath(__file__)) + "\\wikipedia_de_all_nopic_2020-04.zim"):
     zimfile = ZIMFile(filePath,"utf-8")
 
     totalArticleCount = getLastArticleId(zimfile)
@@ -67,42 +65,77 @@ def fill(world, booksPerBarrel, position,
     barrelsPerChunk = len(barrelPositionList)
     chunkBookCapacity = barrelsPerChunk * booksPerBarrel
    
-    chunkList = generateChunkList(totalArticleCount, chunkBookCapacity, position)
-    if onlyPrintForceLoad:
-        return
+    chunkList = generateChunkList(totalArticleCount, chunkBookCapacity, position, world == False)
+    if world:
 
-    wallChunkList = generateWallList(chunkList)
+        wallChunkList = generateWallList(chunkList)
 
-    totalChunkCount = len(chunkList) + len(wallChunkList)
-    completedChunks = 0
-    currentArticle = skipArticles
-    for chunkCoords in chunkList:
-        if skipChunk > 0:
-            skipChunk -= 1
-            continue
-        start = time.perf_counter()
-        chunk = world.get_chunk(chunkCoords[0], chunkCoords[1], dimension)
-        fillChunk(chunk, barrelPositionList, world, dimension, currentArticle, booksPerBarrel, filePath)
-        currentArticle += booksPerBarrel * barrelsPerChunk
+        totalChunkCount = len(chunkList) + len(wallChunkList)
+        completedChunks = 0
+        currentArticle = skipArticles
+        for chunkCoords in chunkList:
+            if skipChunk > 0:
+                skipChunk -= 1
+                continue
+            start = time.perf_counter()
+            chunk = world.get_chunk(chunkCoords[0], chunkCoords[1], dimension)
+            fillChunk(chunk, barrelPositionList, world, dimension, currentArticle, booksPerBarrel, filePath)
+            currentArticle += booksPerBarrel * barrelsPerChunk
 
+            world.save()
+
+            completedChunks += 1
+            print("chunk time (m): ", (time.perf_counter() - start)/60)
+            print("completed chunk: ", completedChunks)
+            yield 100 * completedChunks / totalChunkCount
+
+        for wallChunkCoords, orientation in wallChunkList:
+            chunk = world.get_chunk(wallChunkCoords[0], wallChunkCoords[1], dimension)
+            placeWall(chunk, orientation, world)
+
+            completedChunks += 1
+            yield 100 * completedChunks / totalChunkCount
         world.save()
-
-        completedChunks += 1
-        print("loop time: ", (time.perf_counter() - start)/60)
-        print("completed chunk: ", completedChunks)
-        yield 100 * completedChunks / totalChunkCount
-
-    for wallChunkCoords, orientation in wallChunkList:
-        chunk = world.get_chunk(wallChunkCoords[0], wallChunkCoords[1], dimension)
-        placeWall(chunk, orientation, world)
-
-        completedChunks += 1
-        yield 100 * completedChunks / totalChunkCount
 
 
 if __name__ == "__main__":
-    world = load_world(path.expandvars('%APPDATA%\\.minecraft\\saves\\New World (4)\\'))
-    for x in fill(world, 9, [0, 0]):
-        print(x)
+    parser = argparse.ArgumentParser(description='Puts a wiki into a Minecraft world')
+    #parser.add_argument('-wiki', type=str, help='Location of the wiki file', default=path.dirname(path.realpath(__file__)) + "\\wikipedia_de_all_nopic_2020-04.zim")
+    parser.add_argument('-wiki', type=str, help='Location of the wiki file', default=path.dirname(path.realpath(__file__)) + "\\wikipedia_de_basketball_nopic_2020-04.zim")
+    parser.add_argument('-world', type=str, help='Location of the world file. You may use %%APPDATA%%', default='%APPDATA%\\.minecraft\\saves\\New World (4)\\')
+    parser.add_argument('-booksPerBarrel', type=int, help='Number of books to put in a barrel', default=3)
+    parser.add_argument('-chunkSkip', type=int, help='Number of chunks to skip', default=0)
+    parser.add_argument('-pos', metavar=("X","Z"),type=int, help='X Z coordinates of the starting chunk (block coordinates)', default=[0,0], nargs=2)
+    
+    args = parser.parse_args()
 
-    world.save()
+    #debug vars
+    bookSkip = 0
+    args.world = False
+    
+
+    if args.world:
+        world = load_world(path.expandvars(args.world))
+        for progress in fill(args.booksPerBarrel,
+                            args.pos,
+                            world = world,
+                            skipArticles = bookSkip,
+                            skipChunk = args.chunkSkip,
+                            filePath = args.wiki):
+            print(progress)
+    else:
+        for progress in fill(args.booksPerBarrel,
+                            args.pos,
+                            world = False,
+                            skipArticles = bookSkip,
+                            skipChunk = args.chunkSkip,
+                            filePath = args.wiki):
+            pass
+
+
+    
+
+
+
+
+    
