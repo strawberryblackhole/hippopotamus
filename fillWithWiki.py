@@ -8,10 +8,17 @@ import argparse
 
 from amulet.world_interface import load_world
 
-def generateChunkList(totalArticleCount, chunkBookCapacity, target_pos):
+def generateChunkList(totalArticleCount, chunkBookCapacity, target_pos, outputForceload = False):
     #generate a square, that could fit (more than) all articles
     sideLength = math.ceil(math.sqrt(totalArticleCount/chunkBookCapacity))
-    print("/forceload %d %d %d %d"%(target_pos[0], target_pos[1], target_pos[0] + (sideLength+2)*16, target_pos[1] + (sideLength+2)*16))#give it 2 more chunks just to be sure
+    if outputForceload:
+        commands = ""
+        for maxX in range(sideLength):
+            for maxY in range(sideLength):
+                commands +="forceload add %d %d %d %d\n"%(maxX*16*16 + target_pos[0], maxY*16*16 + target_pos[1], maxX*16*16 + target_pos[0] + 16*16, maxY*16*16 + target_pos[1] + 16*16)
+        print(commands)
+        return
+
     chunkList = []
     for x in range(sideLength):
         for z in range(sideLength):
