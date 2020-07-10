@@ -12,11 +12,8 @@ def generateChunkList(totalArticleCount, chunkBookCapacity, target_pos, outputFo
     #generate a square, that could fit (more than) all articles
     sideLength = math.ceil(math.sqrt(totalArticleCount/chunkBookCapacity))
     if outputForceload:
-        commands = ""
-        for maxX in range(sideLength):
-            for maxY in range(sideLength):
-                commands +="forceload add %d %d %d %d\n"%(maxX*16*16 + target_pos[0], maxY*16*16 + target_pos[1], maxX*16*16 + target_pos[0] + 16*16, maxY*16*16 + target_pos[1] + 16*16)
-        print(commands)
+        command = "/chunkgenerator:generatechunks %d %d %d %d"%(target_pos[0] - 1, target_pos[1] - 1, target_pos[0] + sideLength + 1, target_pos[1] + sideLength + 1)#+- 1 to include the outer border of the library
+        print(command)
         return
 
     chunkList = []
@@ -107,10 +104,10 @@ def fill(       booksPerBarrel,
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Puts a wiki into a Minecraft world')
-    #parser.add_argument('-wiki', type=str, help='Location of the wiki file', default=path.dirname(path.realpath(__file__)) + "\\wikipedia_de_all_nopic_2020-04.zim")
-    parser.add_argument('-wiki', type=str, help='Location of the wiki file', default=path.dirname(path.realpath(__file__)) + "\\wikipedia_de_basketball_nopic_2020-04.zim")
-    parser.add_argument('-world', type=str, help='Location of the world file. You may use %%APPDATA%%', default='%APPDATA%\\.minecraft\\saves\\New World (4)\\')
-    parser.add_argument('-booksPerBarrel', type=int, help='Number of books to put in a barrel', default=3)
+    parser.add_argument('-wiki', type=str, help='Location of the wiki file', default=path.dirname(path.realpath(__file__)) + "\\wikipedia_de_all_nopic_2020-04.zim")
+    #parser.add_argument('-wiki', type=str, help='Location of the wiki file', default=path.dirname(path.realpath(__file__)) + "\\wikipedia_de_basketball_nopic_2020-04.zim")
+    parser.add_argument('-world', type=str, help='Location of the world file. You may use %%APPDATA%%')
+    parser.add_argument('-booksPerBarrel', type=int, help='Number of books to put in a barrel', default=27)
     parser.add_argument('-chunkSkip', type=int, help='Number of chunks to skip', default=0)
     parser.add_argument('-pos', metavar=("X","Z"),type=int, help='X Z coordinates of the starting chunk (block coordinates)', default=[0,0], nargs=2)
     
@@ -118,10 +115,10 @@ if __name__ == "__main__":
 
     #debug vars
     bookSkip = 0
-    args.world = False
+    args.world = '%APPDATA%\\.minecraft\\saves\\world\\'
     
 
-    if args.world:
+    if args.world is not None:
         world = load_world(path.expandvars(args.world))
         for progress in fill(args.booksPerBarrel,
                             args.pos,
@@ -139,10 +136,3 @@ if __name__ == "__main__":
                             filePath = args.wiki):
             pass
 
-
-    
-
-
-
-
-    
