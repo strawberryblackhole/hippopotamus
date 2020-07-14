@@ -80,17 +80,25 @@ def fill(       booksPerBarrel,
         for chunkCoords in chunkList:
             if skipChunk > 0:
                 skipChunk -= 1
+                completedChunks += 1
+                currentArticle += booksPerBarrel * barrelsPerChunk
                 continue
+            
             start = time.perf_counter()
-            chunk = world.get_chunk(chunkCoords[0], chunkCoords[1], dimension)
-            fillChunk(chunk, barrelPositionList, world, dimension, currentArticle, booksPerBarrel, filePath)
+
+            worldObj = load_world(path.expandvars(world))
+            chunk = worldObj.get_chunk(chunkCoords[0], chunkCoords[1], dimension)
+            fillChunk(chunk, barrelPositionList, worldObj, dimension, currentArticle, booksPerBarrel, filePath)
             currentArticle += booksPerBarrel * barrelsPerChunk
 
-            world.save()
+            worldObj.save()
+            worldObj.close()
 
             completedChunks += 1
             print("chunk time (m): ", (time.perf_counter() - start)/60)
             print("completed chunk: ", completedChunks)
+            if completedChunks == 5:
+                break
             yield 100 * completedChunks / totalChunkCount
 
         for wallChunkCoords, orientation in wallChunkList:
@@ -114,15 +122,17 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     #debug vars
-    bookSkip = 0
-    args.world = '%APPDATA%\\.minecraft\\saves\\world\\'
-    
+    bookSkip = 1000
+    bookSkip = 5000
+    args.world = '%APPDATA%\\.minecraft\\saves\\New World\\'
+    args.chunkSkip = 1
+    args.booksPerBarrel = 5
+    args.pos = [52 + 16*7,0]
 
     if args.world is not None:
-        world = load_world(path.expandvars(args.world))
         for progress in fill(args.booksPerBarrel,
                             args.pos,
-                            world = world,
+                            world = args.world,
                             skipArticles = bookSkip,
                             skipChunk = args.chunkSkip,
                             filePath = args.wiki):
