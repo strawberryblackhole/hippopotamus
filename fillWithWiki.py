@@ -102,18 +102,18 @@ def fill(       booksPerBarrel,
             yield 100 * completedChunks / totalChunkCount
 
         for wallChunkCoords, orientation in wallChunkList:
-            chunk = world.get_chunk(wallChunkCoords[0], wallChunkCoords[1], dimension)
-            placeWall(chunk, orientation, world)
+            chunk = worldObj.get_chunk(wallChunkCoords[0], wallChunkCoords[1], dimension)
+            placeWall(chunk, orientation, worldObj)
 
             completedChunks += 1
             yield 100 * completedChunks / totalChunkCount
-        world.save()
+        worldObj.save()
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Puts a wiki into a Minecraft world')
-    parser.add_argument('-wiki', type=str, help='Location of the wiki file', default=path.dirname(path.realpath(__file__)) + "\\wikipedia_de_all_nopic_2020-04.zim")
-    #parser.add_argument('-wiki', type=str, help='Location of the wiki file', default=path.dirname(path.realpath(__file__)) + "\\wikipedia_de_basketball_nopic_2020-04.zim")
+    #parser.add_argument('-wiki', type=str, help='Location of the wiki file', default=path.dirname(path.realpath(__file__)) + "\\wikipedia_de_all_nopic_2020-04.zim")
+    parser.add_argument('-wiki', type=str, help='Location of the wiki file', default=path.dirname(path.realpath(__file__)) + "\\wikipedia_de_chemistry_nopic_2020-04.zim")
     parser.add_argument('-world', type=str, help='Location of the world file. You may use %%APPDATA%%')
     parser.add_argument('-booksPerBarrel', type=int, help='Number of books to put in a barrel', default=27)
     parser.add_argument('-chunkSkip', type=int, help='Number of chunks to skip', default=0)
