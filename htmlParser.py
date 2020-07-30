@@ -10,6 +10,7 @@ class MyHTMLParser(HTMLParser):
         self._data = [""]
         self._formats = [[]]
         self._attrs = []
+        self._title = ""
         super(MyHTMLParser, self).feed(in_html)
         articleContent =  self._data[0] 
 
@@ -59,7 +60,7 @@ class MyHTMLParser(HTMLParser):
 
         pages[-1] += ' The original work has been modified."}],"text":""}'
 
-        return  pages
+        return self._title, pages
 
     def handle_data(self, data):
         self._data[-1] += data
@@ -114,6 +115,7 @@ class MyHTMLParser(HTMLParser):
             self.collapse_last_block_and_format("\n\n", "\n", "b")
         elif tag == 'h1' :
             if ('class', 'section-heading') in self._attrs[-1]: #if its the title of the article
+                self._title = self._data[-1]
                 self.collapse_last_block_and_format("", "\n", "b")
             else:
                 self.collapse_last_block_and_format("\n\n", "\n", "")
@@ -137,8 +139,8 @@ class MyHTMLParser(HTMLParser):
 def getFormatedArticle(html):
     parser = MyHTMLParser()
     soup = BeautifulSoup(html, features ="html.parser")
-    text = parser.feed(str(soup).replace("\n", "").replace("\t", "")) #bfs processing time is roughly 1/4 of this functions time, and is probably not needed. But it seems to make the html much nicer
+    title, text = parser.feed(str(soup).replace("\n", "").replace("\t", "")) #bfs processing time is roughly 1/4 of this functions time, and is probably not needed. But it seems to make the html much nicer
     #text = parser.feed(html.replace("\n", "").replace("\t", "")) # some things break when not using bfs
     parser.close()
 
-    return text
+    return title, text

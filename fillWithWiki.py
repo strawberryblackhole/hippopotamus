@@ -91,6 +91,7 @@ def fill(       booksPerBarrel,
             fillChunk(chunk, barrelPositionList, worldObj, dimension, currentArticle, booksPerBarrel, filePath)
             currentArticle += booksPerBarrel * barrelsPerChunk
 
+            worldObj.create_undo_point()
             worldObj.save()
             worldObj.close()
 
@@ -107,6 +108,8 @@ def fill(       booksPerBarrel,
 
             completedChunks += 1
             yield 100 * completedChunks / totalChunkCount
+        
+        worldObj.create_undo_point()
         worldObj.save()
 
 
@@ -122,12 +125,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     #debug vars
-    bookSkip = 1000
-    bookSkip = 5000
+    bookSkip = 0
     args.world = '%APPDATA%\\.minecraft\\saves\\New World\\'
-    args.chunkSkip = 1
-    args.booksPerBarrel = 5
-    args.pos = [52 + 16*7,0]
+    args.chunkSkip = 0
+    args.booksPerBarrel = 1
+    args.pos = [0,0]
 
     if args.world is not None:
         for progress in fill(args.booksPerBarrel,

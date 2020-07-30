@@ -99,7 +99,7 @@ def fillbarrels(chunk, barrelPositionList, barrelBlock, currentArticle, booksPer
             pool = Pool(processes=4) #on my laptop ~4 processes was faster than any amount of threads (4 = logic core count)
         else:
             pool = ThreadPool(processes=3)#the article reading is mostly cpu limited, so going high on process count doesnt help
-        outputs = pool.map(partial(tryGetArticle, zimFilePath = zimFilePath), range(currentArticle, currentArticle + booksPerBarrel))
+        outputs = pool.map(partial(tryGetArticle, zimFilePath = zimFilePath), range(currentArticle,currentArticle + booksPerBarrel))
         pool.close()
         #outputs = []
         #for id in range(currentArticle, currentArticle + booksPerBarrel):
@@ -114,9 +114,6 @@ def fillbarrels(chunk, barrelPositionList, barrelBlock, currentArticle, booksPer
 
         stop = time.perf_counter()
         #print("generating a book", (stop-start)/booksPerBarrel)
-
-
-
 
         chunk.blocks[barrelPos] = barrelBlock
         barrelEntity = BlockEntity("java", "barrel", barrelPos[0] + chunk.cx * 16, barrelPos[1], barrelPos[2] + chunk.cz * 16,\
@@ -164,17 +161,20 @@ def tryGetArticle(id, zimFilePath):
     #print("some overhead ", stop - start)
 
     start = time.perf_counter()
-    article = zimFile._get_article_by_index(id)
-    if article != None and article.mimetype == "text/html":
-        articleContent = getFormatedArticle(article.data.decode("utf-8"))
+    article = zimFile._get_article_by_index(id, follow_redirect=False)
+    if article != None:
+        if article.mimetype == "text/html":
+            articleTitle, articleContent = getFormatedArticle(article.data.decode("utf-8"))
 
-        re_pattern = re.compile(u'[^\u0000-\uD7FF\uE000-\uFFFF]', re.UNICODE)
-        articleContent = [re_pattern.sub(u'\uFFFD', page) for page in articleContent] # seems like mc cant handle 💲. (article about the $ sign), this lead me to the assumption, that mc cant handle any surrogate unicode pair. https://stackoverflow.com/questions/3220031/how-to-filter-or-replace-unicode-characters-that-would-take-more-than-3-bytes/3220210#3220210
+            re_pattern = re.compile(u'[^\u0000-\uD7FF\uE000-\uFFFF]', re.UNICODE)
+            articleContent = [re_pattern.sub(u'\uFFFD', page) for page in articleContent] # seems like mc cant handle 💲. (article about the $ sign), this lead me to the assumption, that mc cant handle any surrogate unicode pair. https://stackoverflow.com/questions/3220031/how-to-filter-or-replace-unicode-characters-that-would-take-more-than-3-bytes/3220210#3220210
 
-        stop = time.perf_counter()  
-        #print("parsing ", stop - start)
+            stop = time.perf_counter()  
+            #print("parsing ", stop - start)
 
-        return articleContent, article.title
+            return articleContent, article.url
+        if article.is_redirect == True:
+            return ["{\"text\":\"Redirect not implemented\"}"], article.url
     return None, None
 
 
