@@ -9,6 +9,7 @@ from multiprocessing.pool import ThreadPool
 from ZIMply.zimply import ZIMFile
 import time
 import re
+import json
 
 def getBlock(world, block):
     """turns a block object into a usable block object, no idea what this actually does"""
@@ -140,7 +141,7 @@ def fillbarrels(chunk, barrelPositionList, barrelBlock, currentArticle, booksPer
                                             list_data_type = 8\
                                         ),\
                                         "title": amulet_nbt.TAG_String(titles[iBook]),\
-                                        "author": amulet_nbt.TAG_String("x:%d y:%d z:%d, %d"%(barrelPos[0] + chunk.cx * 16, barrelPos[1], barrelPos[2] + chunk.cz * 16, iBook)),
+                                        "author": amulet_nbt.TAG_String("Pos: x:%d y:%d z:%d, ID: %d"%(barrelPos[0] + chunk.cx * 16, barrelPos[1], barrelPos[2] + chunk.cz * 16, currentArticle + iBook)),
                                     })
                                 })
                                 for iBook in range(len(books))                            
@@ -167,14 +168,14 @@ def tryGetArticle(id, zimFilePath):
             articleTitle, articleContent = getFormatedArticle(article.data.decode("utf-8"))
 
             re_pattern = re.compile(u'[^\u0000-\uD7FF\uE000-\uFFFF]', re.UNICODE)
-            articleContent = [re_pattern.sub(u'\uFFFD', page) for page in articleContent] # seems like mc cant handle 💲. (article about the $ sign), this lead me to the assumption, that mc cant handle any surrogate unicode pair. https://stackoverflow.com/questions/3220031/how-to-filter-or-replace-unicode-characters-that-would-take-more-than-3-bytes/3220210#3220210
+            articleContent = [re_pattern.sub(u'\uFFFD', page) for page in articleContent] # seems like mc cant handle 💲. (found in the article about the $ sign), this lead me to the assumption, that mc cant handle any surrogate unicode pair. https://stackoverflow.com/questions/3220031/how-to-filter-or-replace-unicode-characters-that-would-take-more-than-3-bytes/3220210#3220210
 
             stop = time.perf_counter()  
             #print("parsing ", stop - start)
 
-            return articleContent, article.url
+            return articleContent, json.dumps(article.url, ensure_ascii=False)[1:-1]
         if article.is_redirect == True:
-            return ["{\"text\":\"Redirect not implemented\"}"], article.url
+            return ["{\"text\":\"Redirect not implemented\"}"], json.dumps(article.url, ensure_ascii=False)[1:-1]
     return None, None
 
 

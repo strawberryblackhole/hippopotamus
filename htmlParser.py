@@ -1,5 +1,6 @@
 from html.parser import HTMLParser
 from bs4 import BeautifulSoup
+import json
 
 
 class MyHTMLParser(HTMLParser):
@@ -30,7 +31,7 @@ class MyHTMLParser(HTMLParser):
                     elif formating[0][1] == "bf":
                         pages[-1] += '"},{"text":"'
      
-                pages[-1] += articleContent[iChar]
+                pages[-1] += json.dumps(articleContent[iChar], ensure_ascii=False)[1:-1]
                 charsOnPage += 1
                 if articleContent[iChar] == "\n":
                     charsOnPage += 12
@@ -45,7 +46,7 @@ class MyHTMLParser(HTMLParser):
                     if len(formating) > 1:
                         if formating[0][1] == formating[1][1]:
                             raise Exception()
-                        pages[-1] +='"text":"' + articleContent[iChar]
+                        pages[-1] +='"text":"' + json.dumps(articleContent[iChar], ensure_ascii=False)[1:-1]
                         charsOnPage = 0  
                         continue
 
@@ -55,12 +56,12 @@ class MyHTMLParser(HTMLParser):
                         pass
 
 
-                pages[-1] +='"text":"' + articleContent[iChar]
+                pages[-1] +='"text":"' + json.dumps(articleContent[iChar], ensure_ascii=False)[1:-1]
                 charsOnPage = 0  
 
         pages[-1] += ' The original work has been modified."}],"text":""}'
 
-        return self._title, pages
+        return json.dumps(self._title, ensure_ascii=False), pages
 
     def handle_data(self, data):
         self._data[-1] += data

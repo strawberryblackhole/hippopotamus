@@ -60,10 +60,14 @@ def fill(       booksPerBarrel,
                 dimension = "overworld", 
                 skipChunk = 0, 
                  skipArticles = 0, 
-                 filePath = path.dirname(path.realpath(__file__)) + "\\wikipedia_de_all_nopic_2020-04.zim"):
+                 filePath = "",
+                 totalArticleCount = -1):
     zimfile = ZIMFile(filePath,"utf-8")
 
-    totalArticleCount = getLastArticleId(zimfile)
+    if totalArticleCount == -1:
+        totalArticleCount = getLastArticleId(zimfile)
+        print("Article count: ", totalArticleCount)
+
 
     barrelPositionList = generateBarrelPositionList()
     barrelsPerChunk = len(barrelPositionList)
@@ -115,11 +119,12 @@ def fill(       booksPerBarrel,
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Puts a wiki into a Minecraft world')
-    #parser.add_argument('-wiki', type=str, help='Location of the wiki file', default=path.dirname(path.realpath(__file__)) + "\\wikipedia_de_all_nopic_2020-04.zim")
-    parser.add_argument('-wiki', type=str, help='Location of the wiki file', default=path.dirname(path.realpath(__file__)) + "\\wikipedia_de_chemistry_nopic_2020-04.zim")
+    parser.add_argument('-wiki', type=str, help='Location of the wiki file', default=path.dirname(path.realpath(__file__)) + "\\wikipedia_de_all_nopic_2020-04.zim")
+    #parser.add_argument('-wiki', type=str, help='Location of the wiki file', default=path.dirname(path.realpath(__file__)) + "\\wikipedia_de_chemistry_nopic_2020-04.zim")
     parser.add_argument('-world', type=str, help='Location of the world file. You may use %%APPDATA%%')
     parser.add_argument('-booksPerBarrel', type=int, help='Number of books to put in a barrel', default=27)
     parser.add_argument('-chunkSkip', type=int, help='Number of chunks to skip', default=0)
+    parser.add_argument('-articleCount', type=int, help='If the number of articles was counted before, specifying this can save startup time', default=-1)
     parser.add_argument('-pos', metavar=("X","Z"),type=int, help='X Z coordinates of the starting chunk (block coordinates)', default=[0,0], nargs=2)
     
     args = parser.parse_args()
@@ -130,6 +135,7 @@ if __name__ == "__main__":
     args.chunkSkip = 0
     args.booksPerBarrel = 1
     args.pos = [0,0]
+    args.articleCount = 3979758
 
     if args.world is not None:
         for progress in fill(args.booksPerBarrel,
@@ -137,7 +143,8 @@ if __name__ == "__main__":
                             world = args.world,
                             skipArticles = bookSkip,
                             skipChunk = args.chunkSkip,
-                            filePath = args.wiki):
+                            filePath = args.wiki,
+                            totalArticleCount = args.articleCount):
             print(progress)
     else:
         for progress in fill(args.booksPerBarrel,
