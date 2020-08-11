@@ -22,13 +22,15 @@ class MyHTMLParser(HTMLParser):
                 formating = [x for x in self._formats[0] if x[0] == iChar]
                 if len(formating) > 0:
                     if len(formating) > 1:
-                        if formating[0][1] == formating[1][1]:
-                            raise Exception()
                         continue
 
                     if formating[0][1] == "bt":
                         pages[-1] += '"},{"bold":true,"text":"'
                     elif formating[0][1] == "bf":
+                        pages[-1] += '"},{"text":"'
+                    elif formating[0][1] == "it":
+                        pages[-1] += '"},{"italic":true,"text":"'
+                    elif formating[0][1] == "if":
                         pages[-1] += '"},{"text":"'
      
                 pages[-1] += json.dumps(articleContent[iChar], ensure_ascii=False)[1:-1]
@@ -54,6 +56,10 @@ class MyHTMLParser(HTMLParser):
                         pages[-1] += '"bold":true,'
                     elif formating[0][1] == "bf":
                         pass
+                    elif formating[0][1] == "it":
+                        pages[-1] += '"italic":true,'
+                    elif formating[0][1] == "if":
+                        pass
 
 
                 pages[-1] +='"text":"' + json.dumps(articleContent[iChar], ensure_ascii=False)[1:-1]
@@ -71,11 +77,9 @@ class MyHTMLParser(HTMLParser):
         self._formats.append([])
         self._attrs.append(attrs)
 
-    def remove_data(self, replacement = ""):
-        self._data[-2] += replacement
-        self._data.pop()
-        self._formats.pop()
-        self._attrs.pop()
+    def remove_data(self, replacement = "", replacementFormatings = []):
+        self._data[-1] = replacement
+        self.collapse_last_block_and_format(formatings=replacementFormatings)
 
     def collapse_last_block(self, prefix = "", postfix = ""):
         for element in self._formats[-1]:
@@ -88,8 +92,8 @@ class MyHTMLParser(HTMLParser):
         self._formats.pop()
         self._attrs.pop()
 
-    def collapse_last_block_and_format(self, prefix = "", postfix = "", formating = ""):
-        if formating != "":
+    def collapse_last_block_and_format(self, prefix = "", postfix = "", formatings = []):
+        for formating in formatings:
             self._formats[-1].append([-len(prefix), formating + "t"])#undo / dont do what will be done when collapsing the string
             self._formats[-1].append([len(self._data[-1]) + len(postfix), formating + "f"])
 
@@ -111,15 +115,15 @@ class MyHTMLParser(HTMLParser):
             else:
                 self.collapse_last_block()
         elif tag == 'h3' :
-            self.collapse_last_block_and_format("\n\n", "\n", "")
+            self.collapse_last_block_and_format("\n\n", "\n", [])
         elif tag == 'h2' :
-            self.collapse_last_block_and_format("\n\n", "\n", "b")
+            self.collapse_last_block_and_format("\n\n", "\n", ["b"])
         elif tag == 'h1' :
             if ('class', 'section-heading') in self._attrs[-1]: #if its the title of the article
                 self._title = self._data[-1]
-                self.collapse_last_block_and_format("", "\n", "b")
+                self.collapse_last_block_and_format("", "\n", ["b"])
             else:
-                self.collapse_last_block_and_format("\n\n", "\n", "")
+                self.collapse_last_block_and_format("\n\n", "\n", [])
         elif tag == 'li' :
             self.collapse_last_block("\n -", "")
         elif tag == 'br' :
@@ -131,7 +135,7 @@ class MyHTMLParser(HTMLParser):
         elif tag == 'title' :
             self.remove_data()
         elif tag == 'table' :
-            self.remove_data("\nCan't display table\n")
+            self.remove_data("\nCan't display table\n", ["i"])
         else:
             self.collapse_last_block()
         
