@@ -2,16 +2,20 @@ from html.parser import HTMLParser
 from bs4 import BeautifulSoup
 import json
 
-
 class MyHTMLParser(HTMLParser):
     def __init__(self):
         HTMLParser.__init__(self)
 
-    def feed(self, in_html):
+    def feed(self, in_html, zimFile, barrelPositionList, booksPerBarrel, chunkList, target_pos):
         self._data = [""]
         self._formats = [[[],[]]]
         self._attrs = []
         self._title = ""
+        self._zimFile = zimFile
+        self._barrelPositionList = barrelPositionList
+        self._booksPerBarrel = booksPerBarrel
+        self._chunkList = chunkList
+        self._target_pos = target_pos
         super(MyHTMLParser, self).feed(in_html)
         articleContent =  self._data[0] 
         articleFormating =  self._formats[0]
@@ -92,51 +96,81 @@ class MyHTMLParser(HTMLParser):
         self._attrs.pop()
 
     def handle_endtag(self, tag): 
-        if tag == 'p' :
-            if self._data[-1] != "":
-                self.collaps_last_block_and_format("\n ", "\n")
+        if tag == 'a' :
+            foundiAtt = -1
+            for iAtt in range(len(self._attrs[-1])):
+                try:
+                    self._attrs[-1][iAtt].index("href")
+                    foundiAtt = iAtt
+                    break
+                except ValueError:
+                    continue
+
+
+            if foundiAtt != -1:
+                url = self._attrs[-1][iAtt][1].split("#")[0]
+                entry, idx = self._zimFile._get_entry_by_url("A", url)
+                if(idx != None):
+                    location = getArticleLocationById(idx,self._barrelPositionList, self._booksPerBarrel, self._chunkList, self._target_pos)
+                else:
+                    location = "unknown"
+                self.collaps_last_block_and_format("", str(location))
             else:
-                self.collaps_last_block_and_format()
-        elif tag == 'ul' :
-            self.collaps_last_block_and_format("\n")
-        elif tag == 'ol' :
-            self.collaps_last_block_and_format("\n")
+                self.collaps_last_block_and_format()              
+        elif tag == 'br' :
+            self.collaps_last_block_and_format("\n", "")
         elif tag == 'div' :
             if self._data[-1] != "" and self._data[-1][-1] != "\n":
                 self.collaps_last_block_and_format("\n ", "\n")
             else:
                 self.collaps_last_block_and_format()
-        elif tag == 'h3' :
-            self.collaps_last_block_and_format("\n\n", "\n")
-        elif tag == 'h2' :
-            self.collaps_last_block_and_format("\n\n", "\n", [1,0])
         elif tag == 'h1' :
             if ('class', 'section-heading') in self._attrs[-1]: #if its the title of the article
                 self._title = self._data[-1]
                 self.collaps_last_block_and_format("", "\n", [1,0])
             else:
-                self.collaps_last_block_and_format("\n\n", "\n")
+                self.collaps_last_block_and_format("\n\n", "\n", [1,0])
+        elif tag == 'h2' :
+            self.collaps_last_block_and_format("\n\n", "\n", [1,0])
+        elif tag == 'h3' :
+            self.collaps_last_block_and_format("\n\n", "\n")
         elif tag == 'li' :
             self.collaps_last_block_and_format("\n -", "")
-        elif tag == 'br' :
-            self.collaps_last_block_and_format("\n", "")
+        elif tag == 'p' :
+            if self._data[-1] != "":
+                self.collaps_last_block_and_format("\n ", "\n")
+            else:
+                self.collaps_last_block_and_format()
+        elif tag == 'ol' :
+            self.collaps_last_block_and_format("\n")
+        elif tag == 'ul' :
+            self.collaps_last_block_and_format("\n")
         elif tag == 'script' :
             self.remove_data()
         elif tag == 'style' :
             self.remove_data()
-        elif tag == 'title' :
-            self.remove_data()
         elif tag == 'table' :
             self.remove_data("\nCan't display table\n", [0,1])
+        elif tag == 'title' :
+            self.remove_data()
         else:
             self.collaps_last_block_and_format()
-        
+
+def getArticleLocationById(id, barrelPositionList, booksPerBarrel, chunkList, target_pos):
+
+    booksPerChunk = len(barrelPositionList) * booksPerBarrel
+    chunk = int(id) // booksPerChunk
+    bookNumberInChunk = (int(id) - chunk * booksPerChunk)
+    barrel = (bookNumberInChunk - 1)// booksPerBarrel #-1 because if booksNumberInChunk == booksPerBarrel, it should be 0
+
+    return [chunkList[chunk][0] * 16 + barrelPositionList[barrel][0] + target_pos[0], barrelPositionList[barrel][1], chunkList[chunk][1] * 16 + barrelPositionList[barrel][2] + target_pos[1]]
+   
 
 
-def getFormatedArticle(html):
+def getFormatedArticle(html, zimFile, barrelPositionList, booksPerBarrel, chunkList, target_pos):
     parser = MyHTMLParser()
     soup = BeautifulSoup(html, features ="html.parser")
-    title, text = parser.feed(str(soup).replace("\n", "").replace("\t", "")) #bfs processing time is roughly 1/4 of this functions time, and is probably not needed. But it seems to make the html much nicer
+    title, text = parser.feed(str(soup).replace("\n", "").replace("\t", ""), zimFile, barrelPositionList, booksPerBarrel, chunkList, target_pos) 
     #text = parser.feed(html.replace("\n", "").replace("\t", "")) # some things break when not using bfs
     parser.close()
 

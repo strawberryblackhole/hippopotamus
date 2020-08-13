@@ -86,7 +86,7 @@ def fillSigns(chunk, world, dimension, sign_north, sign_south):
             chunk.block_entities.insert(generateSignEntity(x + chunk.cx * 16, 6, z + chunk.cz * 16, -1))
 
 
-def fillbarrels(chunk, barrelPositionList, barrelBlock, currentArticle, booksPerBarrel, zimFilePath):
+def fillbarrels(chunk, barrelPositionList, barrelBlock, currentArticle, booksPerBarrel, zimFilePath, chunkList, target_pos):
     """Generates all barrels in the chunk and fills them with books/articles"""
     
     for barrelPos in barrelPositionList:
@@ -96,11 +96,11 @@ def fillbarrels(chunk, barrelPositionList, barrelBlock, currentArticle, booksPer
 
         start = time.perf_counter()
 
-        if booksPerBarrel > 10:
+        if booksPerBarrel > 30:
             pool = Pool(processes=4) #on my laptop ~4 processes was faster than any amount of threads (4 = logic core count)
         else:
             pool = ThreadPool(processes=3)#the article reading is mostly cpu limited, so going high on process count doesnt help
-        outputs = pool.map(partial(tryGetArticle, zimFilePath = zimFilePath), range(currentArticle,currentArticle + booksPerBarrel))
+        outputs = pool.map(partial(tryGetArticle, zimFilePath = zimFilePath, barrelPositionList = barrelPositionList, booksPerBarrel = booksPerBarrel, chunkList = chunkList, target_pos = target_pos), range(currentArticle,currentArticle + booksPerBarrel))
         pool.close()
         #outputs = []
         #for id in range(currentArticle, currentArticle + booksPerBarrel):
@@ -152,7 +152,7 @@ def fillbarrels(chunk, barrelPositionList, barrelBlock, currentArticle, booksPer
         chunk.block_entities.insert(barrelEntity)
 
 
-def tryGetArticle(id, zimFilePath):
+def tryGetArticle(id, zimFilePath, barrelPositionList, booksPerBarrel, chunkList, target_pos):
     """Tries to find the article with the given id, returns [False, False] if no article was found, else article and its title are returned"""
 
     start = time.perf_counter()
@@ -165,21 +165,31 @@ def tryGetArticle(id, zimFilePath):
     article = zimFile._get_article_by_index(id, follow_redirect=False)
     if article != None:
         if article.mimetype == "text/html":
-            articleTitle, articleContent = getFormatedArticle(article.data.decode("utf-8"))
+            articleTitle, articleContent = getFormatedArticle(article.data.decode("utf-8"), zimFile, barrelPositionList, booksPerBarrel, chunkList, target_pos)
 
             re_pattern = re.compile(u'[^\u0000-\uD7FF\uE000-\uFFFF]', re.UNICODE)
-            articleContent = [re_pattern.sub(u'\uFFFD', page) for page in articleContent] # seems like mc cant handle 💲. (found in the article about the $ sign), this lead me to the assumption, that mc cant handle any surrogate unicode pair. https://stackoverflow.com/questions/3220031/how-to-filter-or-replace-unicode-characters-that-would-take-more-than-3-bytes/3220210#3220210
+            articleContent = [re_pattern.sub(u'\uFFFD', page).replace(u'\xa0', u' ') for page in articleContent] # seems like mc cant handle 💲. (found in the article about the $ sign), this lead me to the assumption, that mc cant handle any surrogate unicode pair. https://stackoverflow.com/questions/3220031/how-to-filter-or-replace-unicode-characters-that-would-take-more-than-3-bytes/3220210#3220210
 
             stop = time.perf_counter()  
             #print("parsing ", stop - start)
 
-            return articleContent, json.dumps(article.url, ensure_ascii=False)[1:-1]
+            return articleContent, json.dumps(article.url.replace(u'\xa0', u' '), ensure_ascii=False)[1:-1]
         if article.is_redirect == True:
-            return ["{\"text\":\"Redirect not implemented\"}"], json.dumps(article.url, ensure_ascii=False)[1:-1]
+            coordinates = getArticleLocationById(article.mimetype, barrelPositionList, booksPerBarrel, chunkList, target_pos)
+            return ["{\"text\":\"Redirect to article with ID %d at x:%d y:%d z:%d\"}"%tuple([id] + coordinates)], json.dumps(article.url.replace(u'\xa0', u' '), ensure_ascii=False)[1:-1]
     return None, None
 
+def getArticleLocationById(id, barrelPositionList, booksPerBarrel, chunkList, target_pos):
 
-def fillChunk(chunk, barrelPositionList, world, dimension, currentArticle, booksPerBarrel, zimfilePath):
+    booksPerChunk = len(barrelPositionList) * booksPerBarrel
+    chunk = int(id) // booksPerChunk
+    bookNumberInChunk = (int(id) - chunk * booksPerChunk)
+    barrel = (bookNumberInChunk - 1)// booksPerBarrel #-1 because if booksNumberInChunk == booksPerBarrel, it should be 0
+
+    return [chunkList[chunk][0] * 16 + barrelPositionList[barrel][0] + target_pos[0], barrelPositionList[barrel][1], chunkList[chunk][1] * 16 + barrelPositionList[barrel][2] + target_pos[1]]
+
+
+def fillChunk(chunk, barrelPositionList, world, dimension, currentArticle, booksPerBarrel, zimfilePath, chunkList, target_pos):
     """Fills the chunk with all blocks and content"""
     barrel, wool, glowstone, sign_north, sign_south, air, stone, lantern = createBlocks(world)
 
@@ -206,7 +216,7 @@ def fillChunk(chunk, barrelPositionList, world, dimension, currentArticle, books
     chunk.blocks[15,4,0] = glowstone
     chunk.blocks[15,4,15] = glowstone
 
-    fillbarrels(chunk, barrelPositionList, barrel, currentArticle, booksPerBarrel, zimfilePath)
+    fillbarrels(chunk, barrelPositionList, barrel, currentArticle, booksPerBarrel, zimfilePath, chunkList, target_pos)
 
     chunk.changed = True
 

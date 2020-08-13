@@ -92,10 +92,10 @@ def fill(       booksPerBarrel,
 
             worldObj = load_world(path.expandvars(world))
             chunk = worldObj.get_chunk(chunkCoords[0], chunkCoords[1], dimension)
-            fillChunk(chunk, barrelPositionList, worldObj, dimension, currentArticle, booksPerBarrel, filePath)
+            fillChunk(chunk, barrelPositionList, worldObj, dimension, currentArticle, booksPerBarrel, filePath, chunkList, position)
             currentArticle += booksPerBarrel * barrelsPerChunk
 
-            worldObj.create_undo_point()
+            worldObj.create_undo_point()#workaround suggested by amulet team so that saving works (can possibly be removed in the future)
             worldObj.save()
             worldObj.close()
 
@@ -113,14 +113,14 @@ def fill(       booksPerBarrel,
             completedChunks += 1
             yield 100 * completedChunks / totalChunkCount
         
-        worldObj.create_undo_point()
+        worldObj.create_undo_point()#workaround suggested by amulet team so that saving works (can possibly be removed in the future)
         worldObj.save()
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Puts a wiki into a Minecraft world')
-    parser.add_argument('-wiki', type=str, help='Location of the wiki file', default=path.dirname(path.realpath(__file__)) + "\\wikipedia_de_all_nopic_2020-04.zim")
-    #parser.add_argument('-wiki', type=str, help='Location of the wiki file', default=path.dirname(path.realpath(__file__)) + "\\wikipedia_de_chemistry_nopic_2020-04.zim")
+    #parser.add_argument('-wiki', type=str, help='Location of the wiki file', default=path.dirname(path.realpath(__file__)) + "\\wikipedia_de_all_nopic_2020-04.zim")
+    parser.add_argument('-wiki', type=str, help='Location of the wiki file', default=path.dirname(path.realpath(__file__)) + "\\wikipedia_de_chemistry_nopic_2020-04.zim")
     parser.add_argument('-world', type=str, help='Location of the world file. You may use %%APPDATA%%')
     parser.add_argument('-booksPerBarrel', type=int, help='Number of books to put in a barrel', default=27)
     parser.add_argument('-chunkSkip', type=int, help='Number of chunks to skip', default=0)
@@ -133,9 +133,9 @@ if __name__ == "__main__":
     bookSkip = 0
     args.world = '%APPDATA%\\.minecraft\\saves\\New World\\'
     args.chunkSkip = 0
-    args.booksPerBarrel = 1
+    args.booksPerBarrel = 27
     args.pos = [0,0]
-    args.articleCount = 3979758
+    #args.articleCount = 3979758
 
     if args.world is not None:
         for progress in fill(args.booksPerBarrel,
