@@ -102,8 +102,6 @@ def fill(       booksPerBarrel,
             completedChunks += 1
             print("chunk time (m): ", (time.perf_counter() - start)/60)
             print("completed chunk: ", completedChunks)
-            if completedChunks == 5:
-                break
             yield 100 * completedChunks / totalChunkCount
 
         for wallChunkCoords, orientation in wallChunkList:
@@ -119,8 +117,7 @@ def fill(       booksPerBarrel,
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Puts a wiki into a Minecraft world')
-    #parser.add_argument('-wiki', type=str, help='Location of the wiki file', default=path.dirname(path.realpath(__file__)) + "\\wikipedia_de_all_nopic_2020-04.zim")
-    parser.add_argument('-wiki', type=str, help='Location of the wiki file', default=path.dirname(path.realpath(__file__)) + "\\wikipedia_de_chemistry_nopic_2020-04.zim")
+    parser.add_argument('-wiki', type=str, help='Location of the wiki file')
     parser.add_argument('-world', type=str, help='Location of the world file. You may use %%APPDATA%%')
     parser.add_argument('-booksPerBarrel', type=int, help='Number of books to put in a barrel', default=27)
     parser.add_argument('-chunkSkip', type=int, help='Number of chunks to skip', default=0)
@@ -131,10 +128,13 @@ if __name__ == "__main__":
 
     #debug vars
     bookSkip = 0
-    args.world = '%APPDATA%\\.minecraft\\saves\\New World\\'
-    args.chunkSkip = 0
-    args.booksPerBarrel = 27
+    args.world = '%APPDATA%\\.minecraft\\saves\\loadedWorld\\'
+    args.chunkSkip = 5
+    args.booksPerBarrel = 50
     args.pos = [0,0]
+    #args.wiki = path.dirname(path.realpath(__file__)) + "\\wikipedia_de_chemistry_nopic_2020-04.zim"
+    #args.articleCount = ????
+    args.wiki = path.dirname(path.realpath(__file__)) + "\\wikipedia_de_all_nopic_2020-04.zim"
     #args.articleCount = 3979758
 
     if args.world is not None:

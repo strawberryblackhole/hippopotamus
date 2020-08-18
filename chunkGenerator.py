@@ -126,7 +126,7 @@ def fillbarrels(chunk, barrelPositionList, barrelBlock, currentArticle, booksPer
                         "keepPacked": amulet_nbt.TAG_Byte(0),\
                         "isMovable": amulet_nbt.TAG_Byte(1),\
                         "Findable": amulet_nbt.TAG_Byte(0),\
-                        "CustomName": amulet_nbt.TAG_String("{\"text\":\"x:%d z:%d\"}"%(barrelPos[0] + chunk.cx * 16, barrelPos[2] + chunk.cz * 16)),\
+                        "CustomName": amulet_nbt.TAG_String("{\"text\":\"x:%d y:%d z:%d\"}"%(barrelPos[0] + chunk.cx * 16, barrelPos[1], barrelPos[2] + chunk.cz * 16)),\
                         "Items": amulet_nbt.TAG_List(\
                             value = [
                                 amulet_nbt.TAG_Compound(\
