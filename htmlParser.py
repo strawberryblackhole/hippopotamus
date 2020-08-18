@@ -112,9 +112,9 @@ class MyHTMLParser(HTMLParser):
                 entry, idx = self._zimFile._get_entry_by_url("A", url)
                 if(idx != None):
                     location = getArticleLocationById(idx,self._barrelPositionList, self._booksPerBarrel, self._chunkList, self._target_pos)
+                    self.collaps_last_block_and_format("", "[ID %d at x:%d y:%d z:%d]"%tuple([idx] + location))
                 else:
-                    location = "unknown"
-                self.collaps_last_block_and_format("", str(location))
+                    self.collaps_last_block_and_format("", "[%s]"%url)
             else:
                 self.collaps_last_block_and_format()              
         elif tag == 'br' :
